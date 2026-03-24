@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>隐私协议 - 管理后台</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+    }
+    .header {
+      background: #16213e;
+      padding: 20px 40px;
+      border-bottom: 1px solid #0f3460;
+    }
+    .header h1 {
+      font-size: 20px;
+      color: #e94560;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #aaa;
+      font-size: 14px;
+    }
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 16px;
+    }
+    input:focus {
+      outline: none;
+      border-color: #e94560;
+    }
+    textarea {
+      width: 100%;
+      height: 400px;
+      padding: 16px;
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 14px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      line-height: 1.5;
+      resize: vertical;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #e94560;
+    }
+    .btn {
+      padding: 12px 32px;
+      background: #e94560;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn:hover {
+      background: #d63850;
+    }
+    .btn:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+    .msg {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 6px;
+      display: none;
+    }
+    .msg.success {
+      display: block;
+      background: #1b4332;
+      color: #95d5b2;
+    }
+    .msg.error {
+      display: block;
+      background: #5c1e1e;
+      color: #f8d7da;
+    }
+    .preview {
+      margin-top: 40px;
+      padding: 20px;
+      background: #16213e;
+      border-radius: 6px;
+      border: 1px solid #0f3460;
+    }
+    .preview h3 {
+      color: #e94560;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+    #previewContent {
+      background: #fff;
+      color: #333;
+      padding: 30px;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .tips {
+      margin-top: 40px;
+      padding: 20px;
+      background: #16213e;
+      border-radius: 6px;
+      border: 1px solid #0f3460;
+    }
+    .tips h3 {
+      color: #e94560;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    .tips code {
+      background: #0f3460;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🛡️ 隐私协议管理后台</h1>
+  </div>
+
+  <div class="container">
+    <div class="form-group">
+      <label>页面标题</label>
+      <input type="text" id="title" placeholder="输入页面标题">
+    </div>
+
+    <div class="form-group">
+      <label>协议内容（支持 Markdown）</label>
+      <textarea id="content" placeholder="输入协议内容，支持 Markdown 格式"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>页脚文字</label>
+      <input type="text" id="footer" placeholder="输入页脚版权信息">
+    </div>
+
+    <button class="btn" id="saveBtn" onclick="save()">保存</button>
+    <div class="msg" id="msg"></div>
+
+    <div class="preview">
+      <h3>📋 内容预览</h3>
+      <div id="previewContent"></div>
+    </div>
+
+    <div class="tips">
+      <h3>💡 Markdown 语法提示</h3>
+      <p><code># 一级标题</code> <code>## 二级标题</code></p>
+      <p><code>**粗体**</code> <code>*斜体*</code></p>
+      <p><code>- 列表项</code> <code>1. 有序列表</code></p>
+      <p><code>[链接文字](URL)</code></p>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    const API = '/api/admin';
+
+    // Load current data
+    fetch(API)
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('title').value = data.title || '';
+        document.getElementById('content').value = data.content || '';
+        document.getElementById('footer').value = data.footer || '';
+        updatePreview();
+      });
+
+    // Update preview on input
+    ['title', 'content', 'footer'].forEach(id => {
+      document.getElementById(id).addEventListener('input', updatePreview);
+    });
+
+    function updatePreview() {
+      const content = document.getElementById('content').value;
+      document.getElementById('previewContent').innerHTML = marked(content);
+    }
+
+    function save() {
+      const btn = document.getElementById('saveBtn');
+      const msg = document.getElementById('msg');
+      const data = {
+        title: document.getElementById('title').value,
+        content: document.getElementById('content').value,
+        footer: document.getElementById('footer').value
+      };
+
+      btn.disabled = true;
+      btn.textContent = '保存中...';
+      msg.className = 'msg';
+      msg.style.display = 'none';
+
+      fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(r => r.json())
+      .then(() => {
+        msg.textContent = '✅ 保存成功';
+        msg.className = 'msg success';
+      })
+      .catch(() => {
+        msg.textContent = '❌ 保存失败，请重试';
+        msg.className = 'msg error';
+      })
+      .finally(() => {
+        btn.disabled = false;
+        btn.textContent = '保存';
+      });
+    }
+  </script>
+</body>
+</html>
