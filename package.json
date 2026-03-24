@@ -1,18 +1,22 @@
 {
-  "name": "privacy-policy",
+  "name": "privacy-policy-app",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Privacy Policy App with Hono + React TypeScript",
+  "type": "module",
   "scripts": {
+    "dev": "node server.js",
+    "build": "npm run build --prefix client",
     "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "install:all": "npm install && cd client && npm install"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "body-parser": "^2.2.2",
-    "cors": "^2.8.6",
-    "express": "^5.2.1"
+    "@hono/node-server": "^1.19.11",
+    "hono": "^4.12.9",
+    "jose": "^6.2.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
   }
 }

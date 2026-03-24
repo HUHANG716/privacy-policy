@@ -11,8 +11,7 @@ const __dirname = dirname(__filename)
 
 const app = new Hono()
 
-const DATA_FILE = join(__dirname, 'data.json')
-const PORT = parseInt(process.env.PORT || '3000', 10)
+const DATA_FILE = join(__dirname, '../data.json')
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production'
@@ -57,17 +56,20 @@ function getData() {
   return JSON.parse(readFileSync(DATA_FILE, 'utf-8'))
 }
 
-function saveData(data) {
+function saveData(data: typeof defaultData) {
   writeFileSync(DATA_FILE, JSON.stringify(data, null, 2))
 }
 
+// Middleware
 app.use('*', cors())
 
+// Public routes
 app.get('/api/policy', (c) => {
   const data = getData()
   return c.json(data)
 })
 
+// Login endpoint
 app.post('/api/admin/login', async (c) => {
   const { password } = await c.req.json()
 
@@ -84,7 +86,8 @@ app.post('/api/admin/login', async (c) => {
   return c.json({ token })
 })
 
-app.use('/api/admin/*', async (c, next) => {
+// Auth middleware
+async function authenticate(c: any, next: any) {
   const authHeader = c.req.header('Authorization')
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return c.json({ error: '未授权' }, 401)
@@ -96,7 +99,10 @@ app.use('/api/admin/*', async (c, next) => {
   } catch {
     return c.json({ error: '令牌无效' }, 401)
   }
-})
+}
+
+// Protected admin routes
+app.use('/api/admin/*', authenticate)
 
 app.get('/api/admin', (c) => {
   const data = getData()
@@ -114,6 +120,7 @@ app.post('/api/admin', async (c) => {
   return c.json({ success: true })
 })
 
+// Serve static files from client/dist
 app.get('*', async (c) => {
   const path = c.req.path
   if (path.startsWith('/api')) {
@@ -121,14 +128,15 @@ app.get('*', async (c) => {
   }
   try {
     const fs = await import('fs')
-    const distPath = join(__dirname, 'client/dist', path === '/' ? 'index.html' : path)
+    const distPath = join(__dirname, '../client/dist', path === '/' ? 'index.html' : path)
     if (fs.existsSync(distPath)) {
       const file = fs.readFileSync(distPath)
       const ext = path.split('.').pop()
       const contentType = ext === 'js' ? 'application/javascript' : ext === 'css' ? 'text/css' : 'text/html'
       return c.newResponse(file, { headers: { 'Content-Type': contentType } })
     }
-    const indexPath = join(__dirname, 'client/dist/index.html')
+    // Try index.html for SPA routing
+    const indexPath = join(__dirname, '../client/dist/index.html')
     if (fs.existsSync(indexPath)) {
       return c.newResponse(fs.readFileSync(indexPath), { headers: { 'Content-Type': 'text/html' } })
     }
@@ -138,7 +146,7 @@ app.get('*', async (c) => {
   }
 })
 
-const port = PORT
+const port = parseInt(process.env.PORT || '3001', 10)
 console.log(`🚀 服务运行中：http://localhost:${port}`)
 console.log(`📄 前台页面：http://localhost:${port}/`)
 console.log(`🔐 管理后台：http://localhost:${port}/admin`)
